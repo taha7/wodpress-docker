@@ -1,0 +1,67 @@
+services:
+  service__database:
+    container_name: "${COMPOSE_PROJECT_NAME}_container__mysql"
+    image: mysql:8.3
+    # platform: linux/amd64
+    volumes:
+      - volume__db-data:/var/lib/mysql
+    # env_file: ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD?error}
+      MYSQL_DATABASE: ${DB_NAME?error}
+      MYSQL_USER: ${DB_USER?error}
+      MYSQL_PASSWORD: ${DB_PASSWORD?error}
+    ports:
+      - "${SERVICE_PORT__DATABASE?error}:3306"
+    # phpMyAdmin
+  service__phpmyadmin:
+    container_name: "${COMPOSE_PROJECT_NAME}_container__phpmyadmin"
+    image: phpmyadmin:latest
+    # platform: "linux/${HOST_SYSTEM__ARCHITECTURE}"
+    depends_on:
+      - service__database
+    # env_file: ./.env
+    environment:
+      PMA_HOST: service__database
+      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+    ports:
+      - "${SERVICE_PORT__PHPMYADMIN}:80"
+  # WordPress
+  service__wordpress:
+    container_name: "${COMPOSE_PROJECT_NAME}_container__wordpress"
+    # image: wordpress:6.5.2
+    # platform: "linux/${HOST_SYSTEM__ARCHITECTURE}"
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+    depends_on:
+      - service__database
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "${SERVICE_PORT__WORDPRESS}:80"
+    # env_file: ./.env
+    environment:
+      WORDPRESS_DB_HOST: service__database
+      WORDPRESS_DB_NAME: $DB_NAME
+      WORDPRESS_DB_USER: $DB_USER
+      WORDPRESS_DB_PASSWORD: $DB_PASSWORD
+      WORDPRESS_DEBUG: 1
+      # WORDPRESS_CONFIG_EXTRA: |
+      #   // Enable Debug logging to the /wp-content/debug.log file
+      #   define('WP_DEBUG_LOG', true);
+      #   // Disable display of errors and warnings
+      #   define('WP_DEBUG_DISPLAY', false);
+    volumes:
+      - ../wp-source:/var/www/html
+      - ../wp-content:/var/www/html/wp-content:rw
+      # - ../app_config.json:/var/www/html/app_config.json
+      - ../vendor:/var/www/html/vendor
+      - ../_wpeprivate:/var/www/html/_wpeprivate
+      - ../composer.json:/var/www/html/composer.json
+
+# Volumes
+volumes:
+  volume__db-data:

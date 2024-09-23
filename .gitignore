@@ -1,0 +1,13 @@
+_wpeprivate
+.env
+vendor
+wp-source
+!wp-content/plugins
+wp-content/plugins/*
+!wp-content/plugins/lib-*
+
+
+!wp-content/themes
+wp-content/themes/*
+!wp-content/themes/core*
+
